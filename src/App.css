@@ -1,0 +1,32 @@
+* {
+  box-sizing: border-box;
+  line-height: 1;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.app {
+
+}
+
+.trace-viewer {
+  width: 1000px;
+}
+
+.trace-viewer .graph-container {
+  display: flex;
+  justify-content: safe center;
+  overflow: auto;
+}
+
+.trace-viewer .graph-container .graph {
+  border: 1px solid black;
+}
+
+.node {
+  text-overflow: ellipsis; 
+}
