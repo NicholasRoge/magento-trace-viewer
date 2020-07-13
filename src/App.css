@@ -1,20 +1,53 @@
 * {
   box-sizing: border-box;
   line-height: 1;
-}
-
-html,
-body {
   margin: 0;
   padding: 0;
 }
 
+html,
+body,
+#root,
 .app {
+  width: 100%;
+  height: 100%;
+}
 
+ul {
+  list-style-type: none;
+}
+
+dt {
+  font-weight: bold;
+}
+
+dd {
+  margin: 0 0 4px 4px;
 }
 
 .trace-viewer {
-  width: 1000px;
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+  width: 100%;
+}
+
+.trace-viewer .metadata-container {
+  flex: 0 0 auto;
+}
+
+.trace-viewer .flamechart-container {
+  display: flex;
+  flex-flow: column;
+  flex: 1 1 0;
+}
+
+.trace-viewer .flamechart-container *:not(.flamechart) {
+  flex: 0 0 auto;
+}
+
+.trace-viewer .flamechart-container .flamechart {
+  flex: 1 1 0;
 }
 
 .trace-viewer .graph-container {
@@ -27,6 +60,40 @@ body {
   border: 1px solid black;
 }
 
-.node {
-  text-overflow: ellipsis; 
+.flamechart {
+  align-items: flex-end;
+  display: flex;
+  justify-content: center;
+
+  border: 1px solid black;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.stack-node {
+  overflow: hidden;
+}
+
+.stack-node-label {
+  padding: 2px;
+
+  background: hsl(0, 0%, 80%);
+  border: 1px solid hsl(0, 0%, 60%);
+  text-overflow: ellipsis;
+}
+
+.stack-node.-end-obscured {
+  background-color: hsla(0, 100%, 50%, 0.1);
+}
+
+.stack-node.-start-obscured > .stack-node-label {
+  border-left: none;
+}
+
+.stack-node.-end-obscured >.stack-node-label {
+  border-right: none;
+}
+
+.stack-node-list {
+
 }

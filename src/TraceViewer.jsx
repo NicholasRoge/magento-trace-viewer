@@ -1,156 +1,110 @@
 import React from 'react'
 
-import {fetchBasicTraceInfo, RecordReader} from './utils'
-import Graph from './Graph'
-import StackInfo from './Stack/Info'
-
-
-function createNode(record) {
-  return {
-    startTimeIndex: record.timeIndex,
-    endTimeIndex: null,
-    duration: 0,
-    startMemoryUsage: record.memoryUsage,
-    endMemoryUsage: null,
-    deltaMemoryUsage: null,
-    functionName: record.functionName,
-    arguments: record.arguments,
-    children: [],
-    parent: null,
-    index: -1
-  }
-}
-
-function enterChild(node, stackRoot, stackPath) {
-  const updatedStackRoot = {...stackRoot}
-  
-  let enteredNode = updatedStackRoot
-  enteredNode.duration = node.startTimeIndex - enteredNode.startTimeIndex
-  enteredNode.children = [...enteredNode.children]
-  for (const index of stackPath) {
-    const nextEnteredNode = {
-      ...enteredNode.children[index]
-    }
-    nextEnteredNode.parent = enteredNode
-    nextEnteredNode.duration = node.startTimeIndex - nextEnteredNode.startTimeIndex
-    nextEnteredNode.children = [...nextEnteredNode.children]
-
-    enteredNode.children[index] = nextEnteredNode
-    enteredNode = nextEnteredNode
-  }
-
-  node.index = enteredNode.children.length
-  stackPath.push(node.index)
-
-  enteredNode.children.push(node)
-
-  return updatedStackRoot
-}
-
-function exitChild(exitRecord, stackRoot, stackPath) {
-  const updatedStackRoot = {...stackRoot};
-
-  let exitedNode = updatedStackRoot
-  exitedNode.duration = exitRecord.timeIndex - exitedNode.startTimeIndex
-  exitedNode.children = [...exitedNode.children]
-  for (const index of stackPath) {
-    const nextExitedNode = {
-      ...exitedNode.children[index]
-    }
-    nextExitedNode.parent = exitedNode
-    nextExitedNode.duration = exitRecord.timeIndex - nextExitedNode.startTimeIndex
-    nextExitedNode.children = [...nextExitedNode.children]
-
-    exitedNode.children[index] = nextExitedNode
-    exitedNode = nextExitedNode
-  }
-
-  stackPath.pop()
-  exitedNode.endTimeIndex = exitRecord.timeIndex
-  exitedNode.duration = exitRecord.timeIndex - exitedNode.startTimeIndex
-  exitedNode.deltaMemoryUsage = exitRecord.memoryUsage - exitedNode.startMemoryUsage
-
-  return updatedStackRoot
-}
+import InterruptedError from './InterruptedError'
+import StackTreeBuilder from './StackTreeBuilder'
+import TraceRecordReader from './TraceRecordReader'
+import FlameChart from './FlameChart'
 
 export default function TraceViewer({ traceFile })
 {
-  const [basicInfo, setBasicInfo] = React.useState(null)
+  const [error, setError] = React.useState(null)
+  const [traceVersion, setTraceVersion] = React.useState(null)
+  const [traceFileFormat, setTraceFileFormat] = React.useState(null)
+  const [traceStartDate, setTraceStartDate] = React.useState(null)
+  const [traceEndDate, setTraceEndDate] = React.useState(null)
+  const [traceRecordsProcessedCount, setTraceRecordsProcessedCount] = React.useState(0)
+  const [stackTreeRootNode, setStackTreeRootNode] = React.useState(null)
+
   React.useEffect(function () {
-    fetchBasicTraceInfo(traceFile).then(setBasicInfo)
-  }, [traceFile])
+    let lastUpdateTimeIndex = -Infinity
+    let traceRecordsProcessedCount = 0
 
-  const [stackRoot, setStackRoot] = React.useState()
-  React.useEffect(function () {
-    let interrupted = false;
+    const traceRecordReader = new TraceRecordReader(traceFile)
+    traceRecordReader.addRecordProcessor(function () {
+      ++traceRecordsProcessedCount
 
-    let renders = 0
-    let renderStartTime = (new Date()).getTime();
+      setTraceRecordsProcessedCount(traceRecordsProcessedCount)
+    })
 
-    (async function () {
-      const recordReader = new RecordReader(traceFile);
-
-      let record = await recordReader.next()
-      if (record.type !== 'entry') {
-        throw new Error('Unexpected first record type.')
-      }
-      let stackRoot = createNode(record)
-      stackRoot.path = 'root'
-      setStackRoot(stackRoot)
-
-      let nextNotifyTime = 0.000001
-      const stackPath = []
-      while (record = await recordReader.next()) {
-        switch (record.type) {
-          case 'entry':
-            stackRoot = enterChild(createNode(record), stackRoot, stackPath)
-            break
-
-          case 'exit':
-            stackRoot = exitChild(record, stackRoot, stackPath)
-            break
-        }
-
-        const currentTime = (new Date()).getTime()
-        if ((currentTime - renderStartTime) / 1000 > renders) {
-          console.log("Rendering", renders, currentTime - renderStartTime)
-          setStackRoot(stackRoot)
-          ++renders
-        }
+    const stackTreeBuilder = new StackTreeBuilder(traceRecordReader)
+    stackTreeBuilder.subscribe(function (rootNode) {
+      if (rootNode.duration - lastUpdateTimeIndex < 0.1) {
+        return
       }
 
-      setStackRoot(stackRoot)
-    })()
+
+      lastUpdateTimeIndex = rootNode.duration
+
+      setStackTreeRootNode(rootNode)
+
+      if (rootNode.duration > 1) {
+        stackTreeBuilder.interrupt()
+      }
+    })
+    stackTreeBuilder.build()
+      .then(setStackTreeRootNode)
+      .catch(function (err) {
+        if (err instanceof InterruptedError) {
+          return
+        }
+
+
+        const errorMessage = 'Caught error while building stack tree:  ' + err.message
+        setError(errorMessage)
+
+        console.error(errorMessage)
+        console.error(err)
+      }) 
+
+    traceRecordReader.getVersion().then(setTraceVersion)
+    traceRecordReader.getFileFormat().then(setTraceFileFormat)
+    traceRecordReader.getTraceStart().then(setTraceStartDate)
+    traceRecordReader.getTraceEnd().then(setTraceEndDate)
 
     return function () {
-      interrupted = true
+      stackTreeBuilder.interrupt().then(function () {
+        traceRecordReader.reset()
+      })
+
+      setTraceVersion(null)
+      setTraceFileFormat(null)
+      setTraceStartDate(null)
+      setTraceEndDate(null)
+      setStackTreeRootNode(null)
     }
   }, [traceFile])
 
   return (
     <div className="trace-viewer">
-        <div className="basic-info">
-            {!basicInfo ? 'loading basic info' : (
-                <dl>
-                    <dt>Version</dt>
-                    <dd>{basicInfo.version}</dd>
+        {error && (
+          <div className="error-message">{error}</div>
+        )}
 
-                    <dt>File Format</dt>
-                    <dd>{basicInfo.fileFormat}</dd>
+      <div className="metainfo-container">
+        <h1>Meta Info</h1>
 
-                    <dt>Trace Start Time</dt>
-                    <dd>{new Date(basicInfo.traceStartTime).toUTCString()}</dd>
+        <dl>
+          <dt>Version</dt>
+          <dd>{traceVersion}</dd>
 
-                    <dt>Trace End Time</dt>
-                    <dd>{basicInfo.traceEndTime ? new Date(basicInfo.traceEndTime).toUTCString() : '<ongoing>'}</dd>
+          <dt>File Format</dt>
+          <dd>{traceFileFormat}</dd>
 
-                    <dt>Trace Duration</dt>
-                    <dd>{basicInfo.traceDuration ? basicInfo.traceDuration : '<ongoing>'}s</dd>
-                </dl>
-            )}
-        </div>
+          <dt>Trace Start Date</dt>
+          <dd>{traceStartDate && new Date(traceStartDate).toUTCString()}</dd>
 
-        <StackInfo stackRoot={stackRoot} />
+          <dt>Trace End Date</dt>
+          <dd>{traceEndDate && new Date(traceEndDate).toUTCString()}</dd>
+
+          <dt>Records Processed</dt>
+          <dd>{traceRecordsProcessedCount}</dd>
+        </dl>
+      </div>
+
+      <div className="flamechart-container">
+        <h1>Flame Chart</h1>
+        <FlameChart rootNode={stackTreeRootNode} width={1000} timeDX={1} />
+      </div>
     </div>
   )
 }
