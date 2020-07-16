@@ -10,7 +10,7 @@ export function parseRecordLine(line) {
             name: 'traceStart',
             value: line.slice('TRACE START ['.length, -']'.length)
         }
-    } else if (line.slice(0, 'TRACE END ') === 'TRACE END ') {
+    } else if (line.slice(0, 'TRACE END '.length) === 'TRACE END ') {
         return {
             type: 'meta',
             name: 'traceEnd',
