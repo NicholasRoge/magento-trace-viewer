@@ -27,6 +27,23 @@ export default function TraceViewer({ traceFile })
     let traceRecordsProcessedCount = 0
     let recordProcessedTimestampQueue = []
 
+    let interrupted = false
+    const latestUpdates = {
+      traceRecordsProcessedCount,
+      stackTreeRootNode,
+      lastSecondRecordsProcessedCount
+    }
+    function applyLatestUpdates() {
+      setTraceRecordsProcessedCount(latestUpdates.traceRecordsProcessedCount)
+      setStackTreeRootNode(latestUpdates.stackTreeRootNode)
+      setLastSecondRecordsProcessedCount(latestUpdates.lastSecondRecordsProcessedCount)
+
+      if (!interrupted) {
+        requestAnimationFrame(applyLatestUpdates)
+      }
+    }
+    requestAnimationFrame(applyLatestUpdates)
+
     const traceRecordReader = new TraceRecordReader(traceFile)
     traceRecordReader.addRecordProcessor(function () {
       ++traceRecordsProcessedCount
@@ -36,17 +53,15 @@ export default function TraceViewer({ traceFile })
       while (currentTime - recordProcessedTimestampQueue[0] > 1000) {
         recordProcessedTimestampQueue.shift()
       }
-      setLastSecondRecordsProcessedCount(recordProcessedTimestampQueue.length)
+      latestUpdates.lastSecondRecordsProcessedCount = recordProcessedTimestampQueue.length
 
-      setTraceRecordsProcessedCount(traceRecordsProcessedCount)
+      latestUpdates.traceRecordsProcessedCount = traceRecordsProcessedCount
     })
 
     const stackTreeBuilder = new StackTreeBuilder(traceRecordReader)
-    stackTreeBuilder.subscribe(setStackTreeRootNode)
-    stackTreeBuilder.subscribe((rootNode, builder) => rootNode.duration > 1 && builder.interrupt())
-    
+    stackTreeBuilder.subscribe(rootNode => latestUpdates.stackTreeRootNode = rootNode)
     stackTreeBuilder.build()
-      .then(setStackTreeRootNode)
+      .then(rootNode => latestUpdates.stackTreeRootNode = rootNode)
       .catch(function (err) {
         if (err instanceof StackTreeBuilder.InterruptedError) {
           return
@@ -59,6 +74,7 @@ export default function TraceViewer({ traceFile })
         console.error(errorMessage)
         console.error(err)
       }) 
+      .then(() => interrupted = true)
 
     traceRecordReader.getVersion().then(setTraceVersion)
     traceRecordReader.getFileFormat().then(setTraceFileFormat)

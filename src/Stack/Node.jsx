@@ -56,8 +56,9 @@ function NodeList({nodes, timeX, timeDX, width = 100}) {
         </ul>
     )
 }
+NodeList = React.memo(NodeList)
 
-export default function Node({node, timeX, timeDX, width}) {
+function Node({node, timeX, timeDX, width}) {
     const visibleDuration = getVisibleDuration(node, timeX, timeDX)
 
     const nodeClasses = ['stack-node']
@@ -92,4 +93,7 @@ export default function Node({node, timeX, timeDX, width}) {
         </div>
     )
 }
+Node = React.memo(Node)
 Node.List = NodeList
+
+export default Node

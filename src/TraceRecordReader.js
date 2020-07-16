@@ -89,6 +89,7 @@ export default class TraceRecordReader {
     this._linePartial = ''
     this._unprocessedLines = []
     this._metaData = null
+    this._lastProcessorYieldTime = performance.now()
 
     this._readNextLinesPromise = null
     this._readMetaDataPromise = null
@@ -189,12 +190,13 @@ export default class TraceRecordReader {
         record = parseRecordLine(recordLine)
         
         record = this._processRecord(record)
+    } while (record.type === 'meta' && this._unprocessedLines.length > 0)
 
-    } while (record.type === 'meta')
+    const currentTime = performance.now()
+    if (currentTime - this._lastProcessorYieldTime >= 10) {
+      this._lastProcessorYieldTime = currentTime
 
-    ++this.recordsProcessed
-    if (this.recordsProcessed >= 100) {
-        await sleep()
+      await sleep()
     }
 
     return record
