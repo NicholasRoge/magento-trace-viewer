@@ -35,7 +35,7 @@ function NodeList({nodes, timeX, timeDX, width = 100}) {
 
                 let childMarginLeft = Math.floor(childLeftFractional) - lastOutputWidth
                 let childWidth = Math.floor(childWidthFractional)
-                if (!node.endTimeIndex) {
+                if (node.index === nodes.length - 1) {
                     childWidth = Math.ceil(childWidthFractional)
                 } else {
                     childWidth = Math.floor(childWidthFractional)
