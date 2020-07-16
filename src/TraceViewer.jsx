@@ -20,12 +20,23 @@ export default function TraceViewer({ traceFile })
   const [flamechartTimeDX, setFlamechartTimeDX] = React.useState(1)
   const [flamechartFollow, setFlamechartFollow] = React.useState(false)
 
+  const [processingStartTime] = React.useState((new Date()).getTime())
+  const [lastSecondRecordsProcessedCount, setLastSecondRecordsProcessedCount] = React.useState(0)
+
   React.useEffect(function () {
     let traceRecordsProcessedCount = 0
+    let recordProcessedTimestampQueue = []
 
     const traceRecordReader = new TraceRecordReader(traceFile)
     traceRecordReader.addRecordProcessor(function () {
       ++traceRecordsProcessedCount
+  
+      const currentTime = (new Date()).getTime()
+      recordProcessedTimestampQueue.push(currentTime)
+      while (currentTime - recordProcessedTimestampQueue[0] > 1000) {
+        recordProcessedTimestampQueue.shift()
+      }
+      setLastSecondRecordsProcessedCount(recordProcessedTimestampQueue.length)
 
       setTraceRecordsProcessedCount(traceRecordsProcessedCount)
     })
@@ -73,6 +84,9 @@ export default function TraceViewer({ traceFile })
     flamechartFollowTimeDX = (stackTreeRootNode.startTimeIndex + stackTreeRootNode.duration) - flamechartTimeX 
   }
 
+  const currentTime = (new Date()).getTime()
+  const processingDuration = currentTime - processingStartTime
+
   return (
     <div className="trace-viewer">
         {error && (
@@ -98,11 +112,14 @@ export default function TraceViewer({ traceFile })
           <dt>Records Processed</dt>
           <dd>{traceRecordsProcessedCount}</dd>
 
+          <dt>Processing Duration (s)</dt>
+          <dd>{processingDuration / 1000}</dd>
+
           <dt>Records Processed per Second</dt>
-          <dd></dd>
+          <dd>{lastSecondRecordsProcessedCount}</dd>
 
           <dt>Records Processed per Second (Average)</dt>
-          <dd></dd>
+          <dd>{processingDuration > 0 && ((traceRecordsProcessedCount / processingDuration) * 1000)}</dd>
         </dl>
       </div>
 
