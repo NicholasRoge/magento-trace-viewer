@@ -1,4 +1,5 @@
-import InterruptedError from "./InterruptedError"
+export class InterruptedError extends Error {
+}
 
 export function createNode(record) {
   return {
@@ -12,11 +13,14 @@ export function createNode(record) {
     arguments: record.arguments,
     children: [],
     parent: null,
-    index: -1
+    index: -1,
+    level: record.level
   }
 }
 
 export default class StackTreeBuilder {
+    static InterruptedError = InterruptedError
+
     constructor(traceRecordReader) {
         this._traceRecordReader = traceRecordReader
 

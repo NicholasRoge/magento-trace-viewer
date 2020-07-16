@@ -64,7 +64,10 @@ export default function Node({node, timeX, timeDX, width}) {
     if (node.startTimeIndex < timeX) {
         nodeClasses.push('-start-obscured')
     }
-    if (node.endTimeIndex === null || node.endTimeIndex > timeX + timeDX) {
+    if (node.endTimeIndex === null) {
+        nodeClasses.push('-ongoing')
+    }
+    if (node.endTimeIndex > timeX + timeDX) {
         nodeClasses.push('-end-obscured')
     }
 

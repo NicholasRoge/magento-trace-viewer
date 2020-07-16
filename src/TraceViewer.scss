@@ -1,0 +1,54 @@
+.trace-viewer {
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+  width: 100%;
+
+  & > *:not(:last-child) {
+      margin-bottom: 16px;
+  }
+
+  & > *:not(.flamechart-container) {
+    flex: 0 0 auto;
+  }
+
+  & > .flamechart-container {
+    flex: 1 1 auto;
+  }
+}
+
+
+.flamechart-container {
+  align-items: flex-start;
+  display: flex;
+  flex-flow: column;
+
+  *:not(.flamechart) {
+    flex: 0 0 auto;
+  }
+
+  .controls {
+    display: flex;
+    margin: 0 0 8px;
+
+    .control {
+      margin-right: 8px;
+
+      label {
+        display: block;
+        margin: 0 0 4px;
+
+        font-weight: bold;
+      }
+
+      input:not([type="checkbox"]):not([type="radio"]) {
+          width: 64px;
+      }
+    }
+  }
+
+  .flamechart {
+    flex: 1 1 auto;
+    height: 0px;
+  }
+}

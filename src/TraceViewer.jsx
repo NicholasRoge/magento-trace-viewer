@@ -1,6 +1,7 @@
+import './TraceViewer.scss'
+
 import React from 'react'
 
-import InterruptedError from './InterruptedError'
 import StackTreeBuilder from './StackTreeBuilder'
 import TraceRecordReader from './TraceRecordReader'
 import FlameChart from './FlameChart'
@@ -15,8 +16,11 @@ export default function TraceViewer({ traceFile })
   const [traceRecordsProcessedCount, setTraceRecordsProcessedCount] = React.useState(0)
   const [stackTreeRootNode, setStackTreeRootNode] = React.useState(null)
 
+  const [flamechartTimeX, setFlamechartTimeX] = React.useState(0)
+  const [flamechartTimeDX, setFlamechartTimeDX] = React.useState(1)
+  const [flamechartFollow, setFlamechartFollow] = React.useState(false)
+
   React.useEffect(function () {
-    let lastUpdateTimeIndex = -Infinity
     let traceRecordsProcessedCount = 0
 
     const traceRecordReader = new TraceRecordReader(traceFile)
@@ -27,24 +31,13 @@ export default function TraceViewer({ traceFile })
     })
 
     const stackTreeBuilder = new StackTreeBuilder(traceRecordReader)
-    stackTreeBuilder.subscribe(function (rootNode) {
-      if (rootNode.duration - lastUpdateTimeIndex < 0.1) {
-        return
-      }
-
-
-      lastUpdateTimeIndex = rootNode.duration
-
-      setStackTreeRootNode(rootNode)
-
-      if (rootNode.duration > 1) {
-        stackTreeBuilder.interrupt()
-      }
-    })
+    stackTreeBuilder.subscribe(setStackTreeRootNode)
+    stackTreeBuilder.subscribe((rootNode, builder) => rootNode.duration > 1 && builder.interrupt())
+    
     stackTreeBuilder.build()
       .then(setStackTreeRootNode)
       .catch(function (err) {
-        if (err instanceof InterruptedError) {
+        if (err instanceof StackTreeBuilder.InterruptedError) {
           return
         }
 
@@ -74,6 +67,12 @@ export default function TraceViewer({ traceFile })
     }
   }, [traceFile])
 
+  
+  let flamechartFollowTimeDX = 0
+  if (flamechartFollow && stackTreeRootNode) {
+    flamechartFollowTimeDX = (stackTreeRootNode.startTimeIndex + stackTreeRootNode.duration) - flamechartTimeX 
+  }
+
   return (
     <div className="trace-viewer">
         {error && (
@@ -98,12 +97,56 @@ export default function TraceViewer({ traceFile })
 
           <dt>Records Processed</dt>
           <dd>{traceRecordsProcessedCount}</dd>
+
+          <dt>Records Processed per Second</dt>
+          <dd></dd>
+
+          <dt>Records Processed per Second (Average)</dt>
+          <dd></dd>
         </dl>
       </div>
 
       <div className="flamechart-container">
         <h1>Flame Chart</h1>
-        <FlameChart rootNode={stackTreeRootNode} width={1000} timeDX={1} />
+
+        <div className="controls">
+          <div className="control">
+            <label htmlFor="flamechart-control-timex">Time X</label>
+            <input 
+              id="flamechart-control-timex"
+              type="number" 
+              step="0.1"
+              value={flamechartTimeX} 
+              onChange={e => setFlamechartTimeX(Math.max(0, e.target.value))} />
+          </div>
+
+          {!flamechartFollow && (
+            <div className="control">
+              <label htmlFor="flamechart-control-timedx">Time ΔX</label>
+              <input 
+                id="flamechart-control-timedx"
+                type="number" 
+                step="0.1"
+                value={flamechartTimeDX} 
+                onChange={e => setFlamechartTimeDX(Math.max(flamechartTimeX, e.target.value))} />
+            </div>
+          )}
+
+          <div className="control">
+            <label htmlFor="flamechart-control-follow">Follow</label>
+            <input 
+              id="flamechart-control-follow"
+              type="checkbox" 
+              value={flamechartFollow} 
+              onChange={e => setFlamechartFollow(e.target.checked)} />
+          </div>
+        </div>
+
+        <FlameChart 
+          rootNode={stackTreeRootNode} 
+          width={1000} 
+          timeX={flamechartTimeX}
+          timeDX={flamechartFollow ? flamechartFollowTimeDX : flamechartTimeDX} />
       </div>
     </div>
   )
