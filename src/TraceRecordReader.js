@@ -23,7 +23,7 @@ export function parseRecordLine(line) {
             value: null
         }
     } else {
-        throw new Error('Unrecognized record type')
+        throw new Error(`Unrecognized record type.  Record:  "${line}"`)
     }
   }
 
@@ -63,7 +63,7 @@ export function parseRecordLine(line) {
       break;
 
     default: 
-      throw new Error('Unrecognized record type')
+      throw new Error(`Unrecognized record type.  Record:  "${line}"`)
   }
 
   return record
