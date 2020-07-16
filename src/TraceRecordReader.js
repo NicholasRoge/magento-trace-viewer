@@ -177,10 +177,14 @@ export default class TraceRecordReader {
     return this._metaTraceEndPromise
   }
 
-  recordsProcessed = 0
   async next() {
     await this._readMetaData()
     while (this._unprocessedLines.length === 0) {
+      if (this._isEndOfFileReached()) {
+        return null;
+      }
+
+
       await this._readNextLines()
     }
 
@@ -221,9 +225,18 @@ export default class TraceRecordReader {
     }
   }
 
+  _isEndOfFileReached() {
+    return this._traceFileSize && this._currentOffset >= this._traceFileSize
+  }
+
   async _readNextLines() {
     if (this._readNextLinesPromise) {
       return this._readNextLinesPromise
+    }
+
+
+    if (this._isEndOfFileReached()) {
+      return
     }
 
 
@@ -242,7 +255,7 @@ export default class TraceRecordReader {
       this._traceFileSize = traceFileSize
 
       this._linePartial += await response.text()
-      this._currentOffset += this._chunkSize
+      this._currentOffset = chunkEndOffset + 1
 
       this._unprocessedLines.push(...this._linePartial.split("\n"))
       this._linePartial = this._unprocessedLines.pop()
