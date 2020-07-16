@@ -275,7 +275,7 @@ export default class TraceRecordReader {
 
 
     this._readMetaDataPromise = new Promise(async resolve => {
-      while (this._unprocessedLines.length < 3) {
+      while (this._unprocessedLines.length < 2) {
         await this._readNextLines()
       }
 

@@ -6,13 +6,13 @@
   border: 1px solid black;
   overflow-x: hidden;
   overflow-y: auto;
+  width: 100%;
 
   .stack-node-list {
     .stack-node {
       overflow: hidden;
 
-      &.-ongoing,
-      &.-end-obscured {
+      &.-ongoing {
         background-color: hsla(0, 100%, 50%, 0.1);
       }
 
@@ -21,6 +21,7 @@
 
         background: hsl(0, 0%, 80%);
         border: 1px solid hsl(0, 0%, 60%);
+        font-size: 0.5em;
         text-overflow: ellipsis;
       }
 

@@ -30,5 +30,15 @@ h1 {
 }
 
 .app {
+  display: flex;
+  flex-flow: column;
   padding: 8px;
+
+  * {
+    flex: 0 0 auto;
+  }
+
+  .trace-viewer {
+    flex: 1 1 auto;
+  }
 }

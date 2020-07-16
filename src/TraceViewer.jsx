@@ -6,6 +6,17 @@ import StackTreeBuilder from './StackTreeBuilder'
 import TraceRecordReader from './TraceRecordReader'
 import FlameChart from './FlameChart'
 
+const defaults = {
+  '/trace/uncached.xt': {
+    flamechartTimeX: 0.000811,
+    flamechartTimeDX: 29.224291
+  },
+  '/trace/cached.xt': {
+    flamechartTimeX: 0.000382,
+    flamechartTimeDX: 1.111432
+  }
+}
+
 export default function TraceViewer({ traceFile })
 {
   const [error, setError] = React.useState(null)
@@ -22,6 +33,13 @@ export default function TraceViewer({ traceFile })
 
   const [processingStartTime] = React.useState((new Date()).getTime())
   const [lastSecondRecordsProcessedCount, setLastSecondRecordsProcessedCount] = React.useState(0)
+
+  React.useEffect(function () {
+    if (traceFile in defaults) {
+      setFlamechartTimeX(defaults[traceFile].flamechartTimeX)
+      setFlamechartTimeDX(defaults[traceFile].flamechartTimeDX)
+    }
+  }, [traceFile])
 
   React.useEffect(function () {
     let traceRecordsProcessedCount = 0
@@ -136,6 +154,12 @@ export default function TraceViewer({ traceFile })
 
           <dt>Records Processed per Second (Average)</dt>
           <dd>{processingDuration > 0 && ((traceRecordsProcessedCount / processingDuration) * 1000)}</dd>
+
+          <dt>Root Start Time Index</dt>
+          <dd>{stackTreeRootNode && stackTreeRootNode.startTimeIndex}</dd>
+
+          <dt>Root Duration</dt>
+          <dd>{stackTreeRootNode && stackTreeRootNode.duration}</dd>
         </dl>
       </div>
 
@@ -148,7 +172,7 @@ export default function TraceViewer({ traceFile })
             <input 
               id="flamechart-control-timex"
               type="number" 
-              step="0.1"
+              step={flamechartTimeDX / 10}
               value={flamechartTimeX} 
               onChange={e => setFlamechartTimeX(Math.max(0, e.target.value))} />
           </div>
