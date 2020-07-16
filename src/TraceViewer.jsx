@@ -177,7 +177,6 @@ export default function TraceViewer({ traceFile })
 
         <FlameChart 
           rootNode={stackTreeRootNode} 
-          width={1000} 
           timeX={flamechartTimeX}
           timeDX={flamechartFollow ? flamechartFollowTimeDX : flamechartTimeDX} />
       </div>
