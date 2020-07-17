@@ -104,4 +104,4 @@ function Node({node, timeX, timeDX, width, onClick = null, onChildClick = null})
 const MemoizedNode = React.memo(Node)
 MemoizedNode.List = MemoizedNodeList
 
-export default Node
+export default MemoizedNode
