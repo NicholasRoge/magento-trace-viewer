@@ -1,7 +1,38 @@
+import {shuffleArray} from './utils'
+
 export class InterruptedError extends Error {
 }
 
+const storedNamespaceIndexByName = JSON.parse(localStorage.namespaceIndexByName || '{}')
+const storedNamespaceIndexNames = Object.values(storedNamespaceIndexByName)
+
+const availableNamespaceIndices = Object.keys([...new Array(30)])
+    .map(index => index * 10)
+    .filter(index => storedNamespaceIndexNames.indexOf(index) === -1)
+shuffleArray(availableNamespaceIndices)
+
+const namespaceIndexByName = new Map()
+Object.entries(storedNamespaceIndexByName).forEach(([namespaceName, index]) => namespaceIndexByName.set(namespaceName, index))
 export function createNode(record) {
+  const classes = []
+
+  const namespaceName = record.functionName.split('\\').shift()
+  if (namespaceName !== record.functionName) {
+    if (namespaceName === 'Magento') {
+        classes.push('-namespace-magento')
+    } else {
+        if (!namespaceIndexByName.has(namespaceName)) {
+            if (availableNamespaceIndices.length > 0) {
+                namespaceIndexByName.set(namespaceName, availableNamespaceIndices.pop())
+            } else {
+                namespaceIndexByName.set(namespaceName, Math.floor(Math.random() * 300))
+            }
+            localStorage.namespaceIndexByName = JSON.stringify(Object.fromEntries(namespaceIndexByName.entries()))
+        }
+        classes.push('-namespace-' + namespaceIndexByName.get(namespaceName))
+    }
+  }
+
   return {
     startTimeIndex: record.timeIndex,
     endTimeIndex: null,
@@ -14,7 +45,8 @@ export function createNode(record) {
     children: [],
     parent: null,
     index: -1,
-    level: record.level
+    level: record.level,
+    classes
   }
 }
 

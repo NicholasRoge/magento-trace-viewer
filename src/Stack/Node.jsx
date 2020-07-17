@@ -70,6 +70,7 @@ function Node({node, timeX, timeDX, width, onClick = null, onChildClick = null})
     if (node.endTimeIndex > timeX + timeDX) {
         nodeClasses.push('-end-obscured')
     }
+    nodeClasses.push(...node.classes)
 
     const nodeStyle = {
         width

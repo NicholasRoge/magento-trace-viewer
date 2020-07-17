@@ -10,9 +10,23 @@
 
   .stack-node-list {
     align-items: flex-start;
-    
+
     .stack-node {
       overflow: hidden;
+
+      &.-namespace-magento {
+        & > .stack-node-label {
+          background-color: hsl(21, 98%, 46%);
+        }
+      }
+
+      @for $i from 0 to 300 {
+        &.-namespace-#{$i} {
+          & > .stack-node-label {
+            background-color: hsl((51 + $i) % 360, 98%, 46%)
+          }
+        }
+      }
 
       &.-ongoing {
         background-color: hsla(0, 100%, 50%, 0.1);
@@ -22,7 +36,7 @@
         padding: 2px;
 
         background: hsl(0, 0%, 80%);
-        border: 1px solid hsl(0, 0%, 60%);
+        border: 1px solid hsla(0, 0%, 0%, 0.6);
         font-size: 0.5em;
         text-overflow: ellipsis;
       }
