@@ -55,7 +55,7 @@ function NodeList({nodes, timeX, timeDX, width = 100, onNodeClick = null}) {
         </ul>
     )
 }
-NodeList = React.memo(NodeList)
+const MemoizedNodeList = React.memo(NodeList)
 
 function Node({node, timeX, timeDX, width, onClick = null, onChildClick = null}) {
     const visibleDuration = getVisibleDuration(node, timeX, timeDX)
@@ -101,7 +101,7 @@ function Node({node, timeX, timeDX, width, onClick = null, onChildClick = null})
         </div>
     )
 }
-Node = React.memo(Node)
-Node.List = NodeList
+const MemoizedNode = React.memo(Node)
+MemoizedNode.List = MemoizedNodeList
 
 export default Node

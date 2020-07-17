@@ -13,7 +13,6 @@ export default function ControlledFlameChart({rootNode})
     const [timeX, setTimeX] = useDelayedState(0)
     const [timeDX, setTimeDX] = useDelayedState(-1)
     const [follow, setFollow] = useDelayedState(true)
-    const [dragInfo, setDragInfo] = React.useState(null)
 
     if (!rootNode) {
         return null
@@ -22,13 +21,6 @@ export default function ControlledFlameChart({rootNode})
 
     let computedTimeX = follow ? rootNode.startTimeIndex : timeX
     let computedTimeDX = follow ? rootNode.duration : timeDX
-    if (dragInfo) {
-        computedTimeX = keepValueBetween(
-            computedTimeX + dragInfo.vector.x,
-            rootNode.startTimeIndex,
-            rootNode.startTimeIndex + (rootNode.duration - computedTimeDX)
-        )
-    }
 
     function handleWheel(e) {
         if (e.deltaY === 0) {
@@ -63,9 +55,9 @@ export default function ControlledFlameChart({rootNode})
 
 
         let scrollTime = (e.deltaY / e.currentTarget.clientWidth) * computedTimeDX
-        if (e.deltaMode == 1) {
+        if (e.deltaMode === 1) {
             scrollTime *= 50
-        } else if (e.deltaMode == 2) {
+        } else if (e.deltaMode === 2) {
             scrollTime = e.deltaY * computedTimeDX
         }
 
@@ -106,40 +98,6 @@ export default function ControlledFlameChart({rootNode})
         setFollow(false)
         setTimeX(newTimeX)
         setTimeDX(newTimeDX)
-    }
-
-
-    function handleMouseDown(e) {
-        setDragInfo({
-            startPos: {
-                x: (e.clientX / e.currentTarget.clientWidth), 
-                y: (e.clientY / e.currentTarget.clientHeight)
-            },
-            startTime: performance.now(),
-            vector: {x: 0, y: 0},
-            duration: 0
-        })
-    }
-
-    function handleMouseMove(e) {
-        if (!dragInfo) {
-            return
-        }
-
-
-        setDragInfo({
-            ...dragInfo,
-            vector: {
-                x: (e.clientX / e.currentTarget.clientWidth) - dragInfo.startPos.x, 
-                y: (e.clientY / e.currentTarget.clientHeight) - dragInfo.startPos.y
-            },
-            duration: performance.now() - dragInfo.startTime
-        })
-    }
-
-    function handleMouseUp(e) {
-        setTimeX(computedTimeX)
-        setDragInfo(null)
     }
 
     function handleNodeClick(node) {

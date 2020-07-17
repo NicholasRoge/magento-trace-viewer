@@ -2,7 +2,7 @@ import './FlameChart.scss'
 
 import React from 'react'
 
-import {useDelayedState, useForwardedRef} from './hooks'
+import {useDelayedState} from './hooks'
 import Node from './Stack/Node'
 
 function getPixelValue(str) {
@@ -24,14 +24,15 @@ export default function FlameChart({rootNode, timeX = 0, timeDX = 1, eventHandle
     const [ownInnerWidth, setOwnInnerWidth] = useDelayedState(null)
 
     React.useEffect(function () {
-        if (!rootEl.current || !onWheelActive) {
+        let rootElCurrent = rootEl.current
+        if (!rootElCurrent || !onWheelActive) {
             return
         }
 
 
         rootEl.current.addEventListener('wheel', onWheelActive)
         return function () {
-            rootEl.current.removeEventListener('wheel', onWheelActive)
+            rootElCurrent.removeEventListener('wheel', onWheelActive)
         }
     }, [rootEl, onWheelActive])
 
@@ -50,7 +51,7 @@ export default function FlameChart({rootNode, timeX = 0, timeDX = 1, eventHandle
         return function () {
             resizeObserver.disconnect()
         }
-    }, [rootEl])
+    }, [rootEl, setOwnInnerWidth])
 
 
     if (!rootNode) {
