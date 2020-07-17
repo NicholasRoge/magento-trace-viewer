@@ -8,11 +8,10 @@ function getVisibleDuration(node, timeX, timeDX) {
     }
 }
 
-function NodeList({nodes, timeX, timeDX, width = 100}) {
+function NodeList({nodes, timeX, timeDX, width = 100, onNodeClick = null}) {
     let lastOutputWidth = 0
 
     const containerStyle = {
-        alignItems: 'flex-end',
         display: 'flex',
         width: width
     }
@@ -49,7 +48,7 @@ function NodeList({nodes, timeX, timeDX, width = 100}) {
 
                 return (
                     <li style={childContainerStyle} key={node.index}>
-                        <Node node={node} timeX={timeX} timeDX={timeDX} width={childWidth} />
+                        <Node node={node} timeX={timeX} timeDX={timeDX} width={childWidth} onClick={onNodeClick} onChildClick={onNodeClick} />
                     </li>
                 )
             })}
@@ -58,7 +57,7 @@ function NodeList({nodes, timeX, timeDX, width = 100}) {
 }
 NodeList = React.memo(NodeList)
 
-function Node({node, timeX, timeDX, width}) {
+function Node({node, timeX, timeDX, width, onClick = null, onChildClick = null}) {
     const visibleDuration = getVisibleDuration(node, timeX, timeDX)
 
     const nodeClasses = ['stack-node']
@@ -83,13 +82,22 @@ function Node({node, timeX, timeDX, width}) {
     }
 
 
+    function handleClick() {
+        if (!onClick) {
+            return
+        }
+
+
+        onClick(node)
+    }
+
     return (
         <div className={nodeClasses.join(' ')} style={nodeStyle}>
-            {node.children.length > 0 && <NodeList nodes={node.children} timeX={Math.max(timeX, node.startTimeIndex)} timeDX={visibleDuration} width={width} />}
-
-            <div className="stack-node-label" style={nodeLabelStyle}>
+            <div className="stack-node-label" style={nodeLabelStyle} onClick={handleClick}>
                 {node.functionName}
             </div>
+
+            {node.children.length > 0 && <NodeList nodes={node.children} timeX={Math.max(timeX, node.startTimeIndex)} timeDX={visibleDuration} width={width} onClick={onChildClick} />}
         </div>
     )
 }

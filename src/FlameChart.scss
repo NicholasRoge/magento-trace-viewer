@@ -1,14 +1,16 @@
 .flamechart {
-  align-items: flex-end;
+  align-items: flex-start;
   display: inline-flex;
   justify-content: flex-start;
+  width: 100%;
 
   border: 1px solid black;
   overflow-x: hidden;
   overflow-y: auto;
-  width: 100%;
 
   .stack-node-list {
+    align-items: flex-start;
+    
     .stack-node {
       overflow: hidden;
 

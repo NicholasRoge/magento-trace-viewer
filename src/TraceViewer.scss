@@ -21,7 +21,7 @@
   display: flex;
   flex-flow: column;
 
-  *:not(.flamechart) {
+  * {
     flex: 0 0 auto;
   }
 

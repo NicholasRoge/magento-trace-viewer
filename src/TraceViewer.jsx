@@ -5,17 +5,8 @@ import React from 'react'
 import StackTreeBuilder from './StackTreeBuilder'
 import TraceRecordReader from './TraceRecordReader'
 import FlameChart from './FlameChart'
+import ControlledFlameChart from './ControlledFlameChart'
 
-const defaults = {
-  '/trace/uncached.xt': {
-    flamechartTimeX: 0.000811,
-    flamechartTimeDX: 29.224291
-  },
-  '/trace/cached.xt': {
-    flamechartTimeX: 0.000382,
-    flamechartTimeDX: 1.111432
-  }
-}
 
 export default function TraceViewer({ traceFile })
 {
@@ -27,19 +18,8 @@ export default function TraceViewer({ traceFile })
   const [traceRecordsProcessedCount, setTraceRecordsProcessedCount] = React.useState(0)
   const [stackTreeRootNode, setStackTreeRootNode] = React.useState(null)
 
-  const [flamechartTimeX, setFlamechartTimeX] = React.useState(0)
-  const [flamechartTimeDX, setFlamechartTimeDX] = React.useState(1)
-  const [flamechartFollow, setFlamechartFollow] = React.useState(false)
-
   const [processingStartTime] = React.useState((new Date()).getTime())
   const [lastSecondRecordsProcessedCount, setLastSecondRecordsProcessedCount] = React.useState(0)
-
-  React.useEffect(function () {
-    if (traceFile in defaults) {
-      setFlamechartTimeX(defaults[traceFile].flamechartTimeX)
-      setFlamechartTimeDX(defaults[traceFile].flamechartTimeDX)
-    }
-  }, [traceFile])
 
   React.useEffect(function () {
     let traceRecordsProcessedCount = 0
@@ -77,7 +57,7 @@ export default function TraceViewer({ traceFile })
     })
 
     const stackTreeBuilder = new StackTreeBuilder(traceRecordReader)
-    stackTreeBuilder.subscribe(rootNode => latestUpdates.stackTreeRootNode = rootNode)
+    //stackTreeBuilder.subscribe(rootNode => latestUpdates.stackTreeRootNode = rootNode)
     stackTreeBuilder.build()
       .then(rootNode => latestUpdates.stackTreeRootNode = rootNode)
       .catch(function (err) {
@@ -113,10 +93,6 @@ export default function TraceViewer({ traceFile })
   }, [traceFile])
 
   
-  let flamechartFollowTimeDX = 0
-  if (flamechartFollow && stackTreeRootNode) {
-    flamechartFollowTimeDX = (stackTreeRootNode.startTimeIndex + stackTreeRootNode.duration) - flamechartTimeX 
-  }
 
   const currentTime = (new Date()).getTime()
   const processingDuration = currentTime - processingStartTime
@@ -166,43 +142,7 @@ export default function TraceViewer({ traceFile })
       <div className="flamechart-container">
         <h1>Flame Chart</h1>
 
-        <div className="controls">
-          <div className="control">
-            <label htmlFor="flamechart-control-timex">Time X</label>
-            <input 
-              id="flamechart-control-timex"
-              type="number" 
-              step={flamechartTimeDX / 10}
-              value={flamechartTimeX} 
-              onChange={e => setFlamechartTimeX(Math.max(0, e.target.value))} />
-          </div>
-
-          {!flamechartFollow && (
-            <div className="control">
-              <label htmlFor="flamechart-control-timedx">Time ΔX</label>
-              <input 
-                id="flamechart-control-timedx"
-                type="number" 
-                step="0.1"
-                value={flamechartTimeDX} 
-                onChange={e => setFlamechartTimeDX(Math.max(flamechartTimeX, e.target.value))} />
-            </div>
-          )}
-
-          <div className="control">
-            <label htmlFor="flamechart-control-follow">Follow</label>
-            <input 
-              id="flamechart-control-follow"
-              type="checkbox" 
-              value={flamechartFollow} 
-              onChange={e => setFlamechartFollow(e.target.checked)} />
-          </div>
-        </div>
-
-        <FlameChart 
-          rootNode={stackTreeRootNode} 
-          timeX={flamechartTimeX}
-          timeDX={flamechartFollow ? flamechartFollowTimeDX : flamechartTimeDX} />
+        <ControlledFlameChart rootNode={stackTreeRootNode} />
       </div>
     </div>
   )
