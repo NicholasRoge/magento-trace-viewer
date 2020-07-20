@@ -6,9 +6,10 @@ import {useDelayedState} from './hooks'
 import StackTreeBuilder from './StackTreeBuilder'
 import TraceRecordReader from './TraceRecordReader'
 import ControlledFlameChart from './ControlledFlameChart'
+import FlameChart from './FlameChart'
 
 
-export default function TraceViewer({ traceFile })
+export default function TraceViewer({ traceFile, awaitBuildDoneBeforeRender = true })
 {
   const [error, setError] = React.useState(null)
   const [traceVersion, setTraceVersion] = React.useState(null)
@@ -17,8 +18,10 @@ export default function TraceViewer({ traceFile })
   const [traceEndDate, setTraceEndDate] = React.useState(null)
   const [traceRecordsProcessedCount, setTraceRecordsProcessedCount] = useDelayedState(0)
   const [stackTreeRootNode, setStackTreeRootNode] = useDelayedState(null)
+  const [selectedNode, setSelectedNode] = React.useState(null)
 
-  const [processingStartTime] = useDelayedState((new Date()).getTime())
+  const [processingStartTime, setProcessingStartTime] = React.useState(performance.now())
+  const [processingEndTime, setProcessingEndTime] = React.useState(null)
   const [lastSecondRecordsProcessedCount, setLastSecondRecordsProcessedCount] = useDelayedState(0)
 
   React.useEffect(function () {
@@ -39,8 +42,11 @@ export default function TraceViewer({ traceFile })
     })
 
     const stackTreeBuilder = new StackTreeBuilder(traceRecordReader)
+    stackTreeBuilder.subscribe(rootNode => setStackTreeRootNode(rootNode))
+    
+    setProcessingStartTime(performance.now())
     stackTreeBuilder.build()
-      .then(setStackTreeRootNode)
+      .then(rootNode => setStackTreeRootNode(rootNode, null, true))
       .catch(function (err) {
         if (err instanceof StackTreeBuilder.InterruptedError) {
           return
@@ -53,6 +59,7 @@ export default function TraceViewer({ traceFile })
         console.error(errorMessage)
         console.error(err)
       }) 
+      .then(() => setProcessingEndTime(performance.now()))
 
     traceRecordReader.getVersion().then(setTraceVersion)
     traceRecordReader.getFileFormat().then(setTraceFileFormat)
@@ -69,13 +76,33 @@ export default function TraceViewer({ traceFile })
       setTraceStartDate(null)
       setTraceEndDate(null)
       setStackTreeRootNode(null)
+      setProcessingStartTime(null)
+      setProcessingEndTime(null)
     }
   }, [traceFile, setTraceVersion, setTraceFileFormat, setTraceStartDate, setTraceEndDate, setStackTreeRootNode, setTraceRecordsProcessedCount, setLastSecondRecordsProcessedCount])
 
+  React.useEffect(function () {
+        // I currently have no way to dynamically modify child nodes after
+        // they're created, so if the root node changes, the selected child node
+        // must be unselected so that it may be reselected to show updated
+        // information
+        if (!selectedNode) {
+          return
+        }
+
+        setSelectedNode(null)
+    }, [stackTreeRootNode, setSelectedNode])
   
 
-  const currentTime = (new Date()).getTime()
-  const processingDuration = currentTime - processingStartTime
+  let processingDuration = 0
+  if (processingStartTime) {
+    processingDuration = (processingEndTime || performance.now()) - processingStartTime
+  }
+
+  let activeNode = null
+  if (!awaitBuildDoneBeforeRender || (stackTreeRootNode && stackTreeRootNode.endTimeIndex)) {
+    activeNode = selectedNode || stackTreeRootNode
+  }
 
   return (
     <div className="trace-viewer">
@@ -105,24 +132,24 @@ export default function TraceViewer({ traceFile })
           <dt>Processing Duration (s)</dt>
           <dd>{processingDuration / 1000}</dd>
 
-          <dt>Records Processed per Second</dt>
-          <dd>{lastSecondRecordsProcessedCount}</dd>
+          {stackTreeRootNode && !stackTreeRootNode.endTimeIndex && (
+            <React.Fragment>
+              <dt>Records Processed per Second</dt>
+              <dd>{lastSecondRecordsProcessedCount}</dd>
 
-          <dt>Records Processed per Second (Average)</dt>
-          <dd>{processingDuration > 0 && ((traceRecordsProcessedCount / processingDuration) * 1000)}</dd>
-
-          <dt>Root Start Time Index</dt>
-          <dd>{stackTreeRootNode && stackTreeRootNode.startTimeIndex}</dd>
-
-          <dt>Root Duration</dt>
-          <dd>{stackTreeRootNode && stackTreeRootNode.duration}</dd>
+              <dt>Records Processed per Second (Average)</dt>
+              <dd>{processingDuration > 0 && ((traceRecordsProcessedCount / processingDuration) * 1000)}</dd>
+            </React.Fragment>
+          )}
         </dl>
       </div>
 
       <div className="flamechart-container">
         <h1>Flame Chart</h1>
 
-        <ControlledFlameChart rootNode={stackTreeRootNode} />
+        <ControlledFlameChart 
+          rootNode={activeNode} 
+          onNodeClick={(e, node) => setSelectedNode(node)} />
       </div>
     </div>
   )

@@ -33,6 +33,13 @@ export function createNode(record) {
     }
   }
 
+  const className = record.functionName.split(/::|->/).shift()
+  if (className !== record.functionName) {
+      if (className === 'Magento\\Framework\\Interception\\PluginList\\PluginList') {
+          classes.push('-plugin-list-call')
+      }
+  }
+
   return {
     startTimeIndex: record.timeIndex,
     endTimeIndex: null,

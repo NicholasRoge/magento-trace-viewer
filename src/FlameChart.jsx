@@ -18,7 +18,7 @@ function computeInnerWidth(el) {
     return el.clientWidth - (paddingLeft + paddingRight)
 }
 
-export default function FlameChart({rootNode, timeX = 0, timeDX = 1, eventHandlers = {}, onWheelActive}) {
+export default function FlameChart({rootNode, timeX = 0, timeDX = 1, eventHandlers = {}, onWheelActive, onNodeClick}) {
     const rootEl = React.useRef()
 
     const [ownInnerWidth, setOwnInnerWidth] = useDelayedState(null)
@@ -64,7 +64,7 @@ export default function FlameChart({rootNode, timeX = 0, timeDX = 1, eventHandle
             {...eventHandlers}
             ref={rootEl}>
             {ownInnerWidth && (
-                <Node.List nodes={[rootNode]} timeX={timeX} timeDX={timeDX} width={ownInnerWidth} />
+                <Node.List nodes={[rootNode]} timeX={timeX} timeDX={timeDX} width={ownInnerWidth} onNodeClick={onNodeClick} />
             )}
         </div>
     )

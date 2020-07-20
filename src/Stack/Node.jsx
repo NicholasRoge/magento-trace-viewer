@@ -83,13 +83,13 @@ function Node({node, timeX, timeDX, width, onClick = null, onChildClick = null})
     }
 
 
-    function handleClick() {
+    function handleClick(e) {
         if (!onClick) {
             return
         }
 
 
-        onClick(node)
+        onClick(e, node)
     }
 
     return (
@@ -98,7 +98,7 @@ function Node({node, timeX, timeDX, width, onClick = null, onChildClick = null})
                 {node.functionName}
             </div>
 
-            {node.children.length > 0 && <NodeList nodes={node.children} timeX={Math.max(timeX, node.startTimeIndex)} timeDX={visibleDuration} width={width} onClick={onChildClick} />}
+            {node.children.length > 0 && <NodeList nodes={node.children} timeX={Math.max(timeX, node.startTimeIndex)} timeDX={visibleDuration} width={width} onNodeClick={onChildClick} />}
         </div>
     )
 }

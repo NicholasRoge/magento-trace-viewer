@@ -14,20 +14,6 @@
     .stack-node {
       overflow: hidden;
 
-      &.-namespace-magento {
-        & > .stack-node-label {
-          background-color: hsl(21, 98%, 46%);
-        }
-      }
-
-      @for $i from 0 to 300 {
-        &.-namespace-#{$i} {
-          & > .stack-node-label {
-            background-color: hsl((51 + $i) % 360, 98%, 46%)
-          }
-        }
-      }
-
       &.-ongoing {
         background-color: hsla(0, 100%, 50%, 0.1);
       }
@@ -37,8 +23,49 @@
 
         background: hsl(0, 0%, 80%);
         border: 1px solid hsla(0, 0%, 0%, 0.6);
+        cursor: pointer;
         font-size: 0.5em;
         text-overflow: ellipsis;
+
+        &:hover {
+          background-color: hsl(0, 0%, 60%);
+        }
+      }
+
+      &.-plugin-list-call > .stack-node-label {
+        //display: none;
+      }
+
+      &.-namespace-magento > .stack-node-label {
+        background-color: hsl(21, 68%, 46%);
+
+        &:hover {
+          background-color: hsl(21, 98%, 46%);
+        }
+      }
+      &.-namespace-magento.-visibility-protected > .stack-node-label {
+        background-color: hsl(21, 68%, 26%);
+      }
+      &.-namespace-magento.-visibility-private > .stack-node-label {
+        background-color: hsl(21, 20%, 46%);
+      }
+
+      @for $i from 0 to 300 {
+        &.-namespace-#{$i} > .stack-node-label {
+          background-color: hsl((51 + $i) % 360, 68%, 46%);
+
+          &:hover {
+            background-color: hsl((51 + $i) % 360, 98%, 46%);
+          }
+        }
+
+        &.-namespace-#{$i}.-visibility-protected > .stack-node-label {
+          background-color: hsl((51 + $i) % 360, 68%, 26%);
+        }
+
+        &.-namespace-#{$i}.-visibility-private > .stack-node-label {
+          background-color: hsl((51 + $i) % 360, 20%, 46%);
+        }
       }
 
       &.-start-obscured > .stack-node-label {

@@ -8,10 +8,10 @@ function keepValueBetween(value, from, to) {
     return Math.max(from, Math.min(value, to))
 }
 
-export default function ControlledFlameChart({rootNode})
+export default function ControlledFlameChart({rootNode, onNodeClick})
 {
     const [timeX, setTimeX] = useDelayedState(0)
-    const [timeDX, setTimeDX] = useDelayedState(-1)
+    const [timeDX, setTimeDX] = useDelayedState(1)
     const [follow, setFollow] = useDelayedState(true)
 
     if (!rootNode) {
@@ -20,7 +20,7 @@ export default function ControlledFlameChart({rootNode})
 
 
     let computedTimeX = follow ? rootNode.startTimeIndex : timeX
-    let computedTimeDX = follow ? rootNode.duration : timeDX
+    let computedTimeDX = follow ? rootNode.duration: timeDX
 
     function handleWheel(e) {
         if (e.deltaY === 0) {
@@ -100,10 +100,6 @@ export default function ControlledFlameChart({rootNode})
         setTimeDX(newTimeDX)
     }
 
-    function handleNodeClick(node) {
-
-    }
-
     return (
         <React.Fragment>
             <div className="controls">
@@ -160,10 +156,13 @@ export default function ControlledFlameChart({rootNode})
                 rootNode={rootNode} 
                 timeX={computedTimeX} 
                 timeDX={computedTimeDX}
-                onNodeClick={handleNodeClick}
-                eventHandlers={{
-                }}
-                onWheelActive={handleWheel} />
+                onWheelActive={handleWheel} 
+                onNodeClick={onNodeClick} />
         </React.Fragment>
     )
+}
+
+ControlledFlameChart.FollowModel = {
+    Continuous: 0,
+    Fixed: 1
 }
