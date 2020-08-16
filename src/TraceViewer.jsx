@@ -18,6 +18,7 @@ export default function TraceViewer({ traceFile, awaitBuildDoneBeforeRender = tr
   const [traceEndDate, setTraceEndDate] = React.useState(null)
   const [traceRecordsProcessedCount, setTraceRecordsProcessedCount] = useDelayedState(0)
   const [stackTreeRootNode, setStackTreeRootNode] = useDelayedState(null)
+  const [stackTreeRootNodeFinal, setStackTreeRootNodeFinal] = React.useState(null)
   const [selectedNode, setSelectedNode] = React.useState(null)
 
   const [processingStartTime, setProcessingStartTime] = React.useState(performance.now())
@@ -46,7 +47,7 @@ export default function TraceViewer({ traceFile, awaitBuildDoneBeforeRender = tr
     
     setProcessingStartTime(performance.now())
     stackTreeBuilder.build()
-      .then(rootNode => setStackTreeRootNode(rootNode, null, true))
+      .then(rootNode => {setStackTreeRootNode(rootNode); setStackTreeRootNodeFinal(rootNode); })
       .catch(function (err) {
         if (err instanceof StackTreeBuilder.InterruptedError) {
           return
@@ -61,10 +62,10 @@ export default function TraceViewer({ traceFile, awaitBuildDoneBeforeRender = tr
       }) 
       .then(() => setProcessingEndTime(performance.now()))
 
-    traceRecordReader.getVersion().then(setTraceVersion)
-    traceRecordReader.getFileFormat().then(setTraceFileFormat)
-    traceRecordReader.getTraceStart().then(setTraceStartDate)
-    traceRecordReader.getTraceEnd().then(setTraceEndDate)
+    traceRecordReader.getVersion().then(setTraceVersion, () => null)
+    traceRecordReader.getFileFormat().then(setTraceFileFormat, () => null)
+    traceRecordReader.getTraceStart().then(setTraceStartDate, () => null)
+    traceRecordReader.getTraceEnd().then(setTraceEndDate, () => null)
 
     return function () {
       stackTreeBuilder.interrupt().then(function () {
@@ -78,6 +79,7 @@ export default function TraceViewer({ traceFile, awaitBuildDoneBeforeRender = tr
       setStackTreeRootNode(null)
       setProcessingStartTime(null)
       setProcessingEndTime(null)
+      setStackTreeRootNodeFinal(null)
     }
   }, [traceFile, setTraceVersion, setTraceFileFormat, setTraceStartDate, setTraceEndDate, setStackTreeRootNode, setTraceRecordsProcessedCount, setLastSecondRecordsProcessedCount])
 
@@ -100,8 +102,11 @@ export default function TraceViewer({ traceFile, awaitBuildDoneBeforeRender = tr
   }
 
   let activeNode = null
-  if (!awaitBuildDoneBeforeRender || (stackTreeRootNode && stackTreeRootNode.endTimeIndex)) {
+  /*if (!awaitBuildDoneBeforeRender || (stackTreeRootNode && stackTreeRootNode.endTimeIndex)) {
     activeNode = selectedNode || stackTreeRootNode
+  }*/
+  if (!awaitBuildDoneBeforeRender || stackTreeRootNodeFinal) {
+    activeNode = selectedNode || stackTreeRootNodeFinal
   }
 
   return (
@@ -132,7 +137,7 @@ export default function TraceViewer({ traceFile, awaitBuildDoneBeforeRender = tr
           <dt>Processing Duration (s)</dt>
           <dd>{processingDuration / 1000}</dd>
 
-          {stackTreeRootNode && !stackTreeRootNode.endTimeIndex && (
+          {!stackTreeRootNodeFinal && (
             <React.Fragment>
               <dt>Records Processed per Second</dt>
               <dd>{lastSecondRecordsProcessedCount}</dd>
@@ -145,6 +150,14 @@ export default function TraceViewer({ traceFile, awaitBuildDoneBeforeRender = tr
       </div>
 
       <div className="flamechart-container">
+        {activeNode !== stackTreeRootNodeFinal && (
+          <div className="control-asdf">
+            <button type="button" onClick={() => setSelectedNode(null)}>
+              Clear Selected Node
+            </button>
+          </div>
+        )}
+
         <h1>Flame Chart</h1>
 
         <ControlledFlameChart 

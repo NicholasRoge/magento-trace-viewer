@@ -14,9 +14,9 @@
     .stack-node {
       overflow: hidden;
 
-      &.-ongoing {
+      /* &.-ongoing {
         background-color: hsla(0, 100%, 50%, 0.1);
-      }
+      } */
 
       & > .stack-node-label {
         padding: 2px;

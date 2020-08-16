@@ -8,15 +8,15 @@ export function useDelayedState(initialValue) {
         value: initialValue,
         setStateDelayed: (function () {
             function setStateDelayed(value, callback = null, setImmediate = false) {
-                if (setImmediate) {
-                    setState({
-                        value,
-                        setStateDelayed
-                    }, callback)
-                    pendingStateUpdates.delete(setState)
+                // if (setImmediate) {
+                //     setState({
+                //         value,
+                //         setStateDelayed
+                //     }, callback)
+                //     pendingStateUpdates.delete(setState)
 
-                    return
-                }
+                //     return
+                // }
 
 
                 pendingStateUpdates.set(setState, {

@@ -154,12 +154,12 @@ export default class StackTreeBuilder {
     }
 
     _enterNode(record) {
-        this._rootNode = {...this._rootNode}
+        //this._rootNode = {...this._rootNode}
 
         let node = this._rootNode
         node.duration = record.timeIndex - node.startTimeIndex
         for (const index of this._latestNodePath) {
-            node.children = [...node.children]
+            //node.children = [...node.children]
             
             node = node.children[index]
             node.duration = record.timeIndex - node.startTimeIndex
@@ -170,22 +170,22 @@ export default class StackTreeBuilder {
         this._visitNode(enteredNode, 'enter')
         
         this._latestNodePath.push(enteredNode.index)
-        node.children = [...node.children, enteredNode]
+        node.children.push(enteredNode)// = [...node.children, enteredNode]
     }
 
     _exitNode(record) {
-        this._rootNode = {...this._rootNode}
+        //this._rootNode = {...this._rootNode}
 
         let node = this._rootNode
         node.duration = record.timeIndex - node.startTimeIndex
         for (const index of this._latestNodePath) {
-            node.children = [...node.children]
+            //node.children = [...node.children]
 
             node = node.children[index]
             node.duration = record.timeIndex - node.startTimeIndex
         }
 
-        const exitedNode = node
+        const exitedNode = node //{...node}
         exitedNode.endTimeIndex = record.timeIndex
         exitedNode.duration = exitedNode.endTimeIndex - exitedNode.startTimeIndex
         exitedNode.endMemoryUsage = record.memoryUsage

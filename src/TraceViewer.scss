@@ -25,6 +25,11 @@
     flex: 0 0 auto;
   }
 
+  .control-asdf {
+    float: right;
+    white-space: nowrap;
+  }
+
   .controls {
     display: flex;
     margin: 0 0 8px;
