@@ -70,7 +70,7 @@ export function parseRecordLine(line) {
 }
 
 export default class TraceRecordReader {
-  constructor (traceFile, chunkSize = 1024 * 1024) {
+  constructor (traceFile, chunkSize = 1024 * 1024 * 50) {
     this._traceFile = traceFile
     this._chunkSize = chunkSize
 
@@ -257,7 +257,7 @@ export default class TraceRecordReader {
       this._linePartial += await response.text()
       this._currentOffset = chunkEndOffset + 1
 
-      this._unprocessedLines.push(...this._linePartial.split("\n"))
+      this._unprocessedLines = this._unprocessedLines.concat(this._linePartial.split("\n"))
       this._linePartial = this._unprocessedLines.pop()
 
       this._readNextLinesPromise = null

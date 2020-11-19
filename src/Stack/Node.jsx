@@ -9,6 +9,7 @@ function getVisibleDuration(node, timeX, timeDX) {
 }
 
 function NodeList({nodes, timeX, timeDX, width = 100, onNodeClick = null}) {
+
     let lastOutputWidth = 0
 
     const containerStyle = {
